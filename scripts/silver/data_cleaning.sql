@@ -167,7 +167,71 @@ WHERE sls_cust_id not in (
 );
 -- All sls_prd_key and sls_cust_id can be used to connect the crm_cust_info and crm_prd_info
 
+-- Checking Date Datatype 
+select
+    table_name,
+    column_name,
+    data_type,
+    IS_NULLABLE 
+from information_schema.COLUMNS
+where table_name = 'crm_sales_details' and table_schema = 'bronze';
+-- sls_order_dt, sls_ship_dt, and sls_due_dt has the int datatype need to be date datatype
+
+-- Checking for invalid dates
+SELECT 
+    NULLIF(sls_order_dt,0) as sls_order_dt
+FROM bronze.crm_sales_details
+WHERE sls_order_dt <= 0 OR LEN(sls_order_dt) != 8;
+SELECT 
+    NULLIF(sls_ship_dt,0) as sls_ship_dt
+FROM bronze.crm_sales_details
+WHERE sls_ship_dt <= 0 OR LEN(sls_ship_dt) != 8;
+SELECT 
+    NULLIF(sls_due_dt,0) as sls_due_dt
+FROM bronze.crm_sales_details
+WHERE sls_due_dt <= 0 OR LEN(sls_due_dt) != 8;
+
+-- There is invalid dates in sls_order_dt
 
 
+-- Check for the Invalid Date Orders
+-- Expectation: No result
+SELECT
+*
+FROM silver.crm_sales_details
+WHERE sls_order_dt > sls_ship_dt OR sls_order_dt > sls_due_dt;
+
+-- no need to do anything
 
 
+-- Check Data Consistency : Between Sales, Quantity and Price
+-- >> Sales = Quantity * Price
+-- >> Values must not be NULL, zero, or negative
+
+SELECT DISTINCT
+    sls_ord_num,
+    sls_sales,
+    sls_quantity,
+    sls_price
+FROM silver.crm_sales_details
+where sls_sales != sls_quantity * sls_price
+OR sls_sales IS NULL OR sls_quantity IS NULL OR sls_price IS NULL
+OR sls_sales <= 0 OR sls_quantity <= 0 OR sls_price <= 0
+ORDER BY sls_sales, sls_quantity, sls_price;
+
+-- Verifing changes in silver.crm_sales_details
+SELECT DISTINCT
+    sls_sales,
+    sls_quantity,
+    sls_price
+FROM silver.crm_sales_details
+where sls_sales != sls_quantity * sls_price
+OR sls_sales IS NULL OR sls_quantity IS NULL OR sls_price IS NULL
+OR sls_sales <= 0 OR sls_quantity <= 0 OR sls_price <= 0
+
+-- =====================================================================================
+-- Cleaning ERP Tables
+-- =====================================================================================
+-- Cleaning erp_cust_az12
+
+-- 
