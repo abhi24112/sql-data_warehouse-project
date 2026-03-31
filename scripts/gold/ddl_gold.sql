@@ -1,4 +1,9 @@
-
+-- =====================================================
+-- Creating Dimension : gold.dim_customers
+-- =====================================================
+IF OBJECT_ID('gold.dim_customers', 'U') IS NOT NULL
+    DROP VIEW gold.dim_customers;
+GO 
 CREATE OR ALTER VIEW gold.dim_customers AS
     SELECT 
         ROW_NUMBER() OVER(ORDER BY cst_id) AS customer_key, -- surrogate key
@@ -21,6 +26,14 @@ CREATE OR ALTER VIEW gold.dim_customers AS
     ON ci.cst_key = la.cid;
 
 GO 
+
+-- =====================================================
+-- Creating Dimension : gold.dim_products
+-- =====================================================
+IF OBJECT_ID('gold.dim_products') IS NOT NULL
+    DROP VIEW gold.dim_products
+GO
+
 CREATE OR ALTER VIEW gold.dim_products AS 
 SELECT
     ROW_NUMBER() OVER(ORDER BY p.prd_start_dt, p.prd_key) AS product_key,
@@ -41,6 +54,13 @@ WHERE prd_end_dt IS NULL -- Filter out all history data
 
 GO 
 
+-- =====================================================
+-- Creating Fact : gold.fact_sales
+-- =====================================================
+IF OBJECT_ID('gold.fact_sales') IS NOT NULL
+    DROP VIEW gold.fact_sales
+GO
+
 CREATE OR ALTER VIEW gold.fact_sales AS 
 SELECT 
     sls_ord_num AS order_number,
@@ -57,33 +77,3 @@ LEFT JOIN gold.dim_products AS pr
 ON sd.sls_prd_key = pr.product_number
 LEFT JOIN gold.dim_customers AS cu
 ON sd.sls_cust_id = cu.customer_id;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
